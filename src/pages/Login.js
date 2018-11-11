@@ -1,9 +1,13 @@
 import React, { Component } from 'react';
 
-import { View, Text, StyleSheet, 
-  TextInput, TouchableOpacity, KeyboardAvoidingView } from 'react-native';
+import {
+  View, Text, StyleSheet,
+  TextInput, TouchableOpacity, KeyboardAvoidingView,
+  AsyncStorage
+} from 'react-native';
 
-// import styles from './styles';
+import { StackActions, NavigationActions } from 'react-navigation'
+import Icon from 'react-native-vector-icons/FontAwesome'
 
 export default class Login extends Component {
   static navigationOptions = {
@@ -14,8 +18,28 @@ export default class Login extends Component {
     username: '',
   }
 
-  handleLogin = () => {
+  async componentDidMount(){
+    const username = await AsyncStorage.getItem('@GoTwitter:username')
 
+    if (username){
+      this.navigateToTimeline();
+    }
+  }
+
+  handleLogin = async () => {
+    const { username } = this.state
+    if (!username.length) return
+    await AsyncStorage.setItem('@GoTwitter:username', username)
+    this.navigateToTimeline()
+  }
+
+  navigateToTimeline = () => {
+    const resetAction = StackActions.reset({
+      index: 0,
+      actions: [NavigationActions.navigate({ routeName: "Timeline"})]
+    })
+
+    this.props.navigation.dispatch(resetAction)
   }
 
   handleInputChange = username => {
@@ -26,11 +50,17 @@ export default class Login extends Component {
     return (
       <KeyboardAvoidingView style={styles.container} behavior="padding">
         <View style={styles.content}>
+          <View>
+            <Icon name="twitter" size={64} color="#4BB0EE" />
+          </View>
+
           <TextInput
             style={styles.input}
             placeholder="Nome do usuário"
             value={this.state.username}
             onChangeText={this.handleInputChange}
+            returnKeyType="send"
+            onSubmitEditing={this.handleLogin}
           />
 
           <TouchableOpacity style={styles.button} onPress={this.handleLogin}>
